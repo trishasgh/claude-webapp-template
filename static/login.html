@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in · UCSD Citizen App</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <span class="brand">UCSD <strong>Citizen App</strong></span>
+      <a class="btn ghost" href="/">← Back</a>
+    </nav>
+
+    <main class="container narrow">
+      <form class="card form" id="auth-form">
+        <h1 id="form-title">Sign in</h1>
+
+        <label>Username
+          <input id="username" name="username" autocomplete="username" required />
+        </label>
+
+        <label id="email-field" class="hidden">Email
+          <input id="email" name="email" type="email" autocomplete="email" />
+        </label>
+
+        <label>Password
+          <input id="password" name="password" type="password" required />
+        </label>
+
+        <p id="message" class="error muted hidden"></p>
+
+        <button class="btn primary block" type="submit" id="submit-btn">Sign in</button>
+        <p class="muted center">
+          <a href="#" id="toggle">New here? Create an account</a>
+        </p>
+      </form>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var mode = params.get("mode") === "register" ? "register" : "login";
+        var form = document.getElementById("auth-form");
+        var title = document.getElementById("form-title");
+        var submit = document.getElementById("submit-btn");
+        var emailField = document.getElementById("email-field");
+        var toggle = document.getElementById("toggle");
+        var message = document.getElementById("message");
+
+        function setMode(m) {
+          mode = m;
+          var isReg = mode === "register";
+          title.textContent = isReg ? "Create an account" : "Sign in";
+          submit.textContent = isReg ? "Create account" : "Sign in";
+          emailField.classList.toggle("hidden", !isReg);
+          document.getElementById("email").required = isReg;
+          toggle.textContent = isReg
+            ? "Already have an account? Sign in"
+            : "New here? Create an account";
+        }
+
+        toggle.addEventListener("click", function (e) {
+          e.preventDefault();
+          setMode(mode === "register" ? "login" : "register");
+        });
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          message.classList.add("hidden");
+          var payload = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+          };
+          var req;
+          if (mode === "register") {
+            payload.email = document.getElementById("email").value;
+            req = api("/api/auth/register", {
+              method: "POST",
+              body: payload,
+            });
+          } else {
+            req = api("/api/auth/login", {
+              method: "POST",
+              body: payload,
+            });
+          }
+          req
+            .then(function (data) {
+              if (mode === "login") {
+                saveToken(data.access_token, payload.username);
+                location.href = "/";
+              } else {
+                setMode("login");
+                message.textContent = "Account created — sign in.";
+                message.classList.remove("hidden");
+              }
+            })
+            .catch(function (err) {
+              message.textContent = err.message || "Something went wrong.";
+              message.classList.remove("hidden");
+            });
+        });
+
+        setMode(mode);
+      })();
+    </script>
+  </body>
+</html>

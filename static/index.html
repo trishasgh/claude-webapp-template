@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UCSD Citizen App</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <span class="brand">UCSD <strong>Citizen App</strong></span>
+      <div class="actions">
+        <span id="user-label" class="muted"></span>
+        <button id="logout-btn" class="btn ghost hidden">Sign out</button>
+      </div>
+    </nav>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Welcome</h1>
+        <p class="lede">
+          A citizen-developed web app scaffold running on the UC San Diego TritonAI
+          platform. Sign in to get started.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="/login">Sign in</a>
+          <a class="btn" href="/login?mode=register">Create an account</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>System status</h2>
+        <p id="health" class="muted">Checking…</p>
+      </section>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+      (function () {
+        var user = getCurrentUser();
+        if (user) {
+          document.getElementById("user-label").textContent = "Signed in as " + user;
+          document.getElementById("logout-btn").classList.remove("hidden");
+          document
+            .getElementById("logout-btn")
+            .addEventListener("click", function () {
+              logout();
+              location.reload();
+            });
+          document.querySelector(".hero-actions").classList.add("hidden");
+        }
+        fetch("/api/health")
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (d) {
+            document.getElementById("health").textContent =
+              "API is " + d.status + " — container healthcheck passing.";
+          })
+          .catch(function () {
+            document.getElementById("health").textContent = "API unreachable.";
+          });
+      })();
+    </script>
+  </body>
+</html>
